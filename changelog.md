@@ -7,7 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- Restart random walk when particle escapes
+- Sample points in the vicinity of the cluster
+- Restart the random walk when the particle escapes
 
 ### Changed
 - New image colors
