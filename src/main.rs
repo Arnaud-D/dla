@@ -9,8 +9,8 @@ fn has_no_neighbours(matrix : &Vec<Vec<bool>>, x : usize, y: usize) -> bool {
 
 fn generate_matrix(size: usize, n_walks: u32) -> Vec<Vec<bool>> {
     let mut matrix = vec![vec![true; size]; size];
-    let midpoint = (size + 1) / 2;
-    matrix[midpoint][midpoint] = false;
+    let center = (size + 1) / 2;
+    matrix[center][center] = false;
 
     let mut rg_pixels = rand::rngs::SmallRng::from_entropy();
     let mut rg_neighbours = rand::rngs::SmallRng::from_entropy();
@@ -23,20 +23,15 @@ fn generate_matrix(size: usize, n_walks: u32) -> Vec<Vec<bool>> {
         x = rg_pixels.gen_range(idx_min, idx_max);
         y = rg_pixels.gen_range(idx_min, idx_max);
         while has_no_neighbours(&matrix, x, y) {
-            let coord = neighbour_coords.choose(&mut rg_neighbours).unwrap();
+            // Move particle
+            let displacement = neighbour_coords.choose(&mut rg_neighbours).unwrap();
+            x = (x as i32 + displacement.0) as usize;
+            y = (y as i32 + displacement.1) as usize;
 
-            x = (x as i32 + coord.0) as usize;
-            if x > idx_max {
-                x = idx_max;
-            } else if x < idx_min {
-                x = idx_min;
-            }
-
-            y = (y as i32 + coord.1) as usize;
-            if y > idx_max {
-                y = idx_max;
-            } else if y < idx_min {
-                y = idx_min;
+            // Restart when particle escapes
+            if x < idx_min || x > idx_max || y < idx_min || y > idx_max {
+                x = rg_pixels.gen_range(idx_min, idx_max);
+                y = rg_pixels.gen_range(idx_min, idx_max);
             }
         }
         matrix[x][y] = false;
