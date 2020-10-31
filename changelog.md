@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Less verbose display of progress
 
+### Fixed
+- Drawing points already clustered is now impossible
+
 
 ## [v0.2.0] - 2020-10-31
 ### Added

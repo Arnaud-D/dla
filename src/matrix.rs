@@ -9,12 +9,29 @@ pub type RankMatrix = Vec<Vec<u32>>;
 
 trait BoolMatrixTrait {
     fn is_isolated(&self, p: &Point) -> bool;
+    fn sample_point(&self, rg: &mut rand::rngs::SmallRng, square_box:&Box) -> Point;
+    fn sample_free_point(&self, rg: &mut rand::rngs::SmallRng, square_box:&Box) -> Point;
 }
 
 impl BoolMatrixTrait for BoolMatrix {
     fn is_isolated(&self, p: &Point) -> bool {
         return self[p.x + 1][p.y] && self[p.x - 1][p.y]
             && self[p.x][p.y + 1] && self[p.x][p.y - 1];
+    }
+
+    fn sample_point(&self, rg: &mut rand::rngs::SmallRng, square_box:&Box) -> Point {
+        Point {
+            x: (*rg).gen_range(square_box.min, square_box.max),
+            y: (*rg).gen_range(square_box.min, square_box.max),
+        }
+    }
+
+    fn sample_free_point(&self, rg: &mut rand::rngs::SmallRng, square_box:&Box) -> Point {
+        let mut p = self.sample_point(rg, square_box);
+        while !self.is_isolated(&p) || !self[p.x][p.y] {
+            p = self.sample_point(rg, square_box);
+        }
+        return p;
     }
 }
 
@@ -57,14 +74,8 @@ impl Box {
         return Box { min: min as usize, max: max as usize };
     }
 
-    fn sample_point(&self, rg: &mut rand::rngs::SmallRng) -> Point {
-        let x = (*rg).gen_range(&self.min, &self.max);
-        let y = (*rg).gen_range(&self.min, &self.max);
-        return Point { x, y };
-    }
-
     fn contains(&self, p: &Point) -> bool {
-        return p.x >= self.min && p.x <= self.max && p.y >= self.min && p.y <= self.max
+        return p.x >= self.min && p.x <= self.max && p.y >= self.min && p.y <= self.max;
     }
 }
 
@@ -78,7 +89,7 @@ pub fn generate_matrix(size: usize, n_walks: u32, mut notify_progress: impl FnMu
     let mut rg_pixels = rand::rngs::SmallRng::from_entropy();
     let mut rg_neighbours = rand::rngs::SmallRng::from_entropy();
     let mut bool_matrix = vec![vec![true; size]; size];
-    let mut rank_matrix = vec![vec![0 as u32;size]; size];
+    let mut rank_matrix = vec![vec![0 as u32; size]; size];
     let center = (size + 1) / 2;
     // Minimal cluster radius considered
     let mut r_cluster = 50;
@@ -88,11 +99,11 @@ pub fn generate_matrix(size: usize, n_walks: u32, mut notify_progress: impl FnMu
         // Update boxes limits
         let r_vicinity = vicinity_ratio * r_cluster;
         let r_escape = escape_ratio * r_cluster;
-        let vicinity_box = Box::from_center_radius(size, center, r_vicinity);
-        let escape_box = Box::from_center_radius(size, center, r_escape);
+        let cluster_vicinity = Box::from_center_radius(size, center, r_vicinity);
+        let cluster_horizon = Box::from_center_radius(size, center, r_escape);
 
         // Perform random walk
-        let mut p = vicinity_box.sample_point(&mut rg_pixels);
+        let mut p = bool_matrix.sample_free_point(&mut rg_pixels, &cluster_vicinity);
         while bool_matrix.is_isolated(&p) {
             // Move the particle
             let displacement = neighbour_coords.choose(&mut rg_neighbours).unwrap();
@@ -102,12 +113,12 @@ pub fn generate_matrix(size: usize, n_walks: u32, mut notify_progress: impl FnMu
             };
 
             // Restart when the particle escapes
-            if !escape_box.contains(&p) {
-                p = vicinity_box.sample_point(&mut rg_pixels);
+            if !cluster_horizon.contains(&p) {
+                p = bool_matrix.sample_free_point(&mut rg_pixels, &cluster_vicinity);
             }
         }
         bool_matrix[p.x][p.y] = false;
-        rank_matrix[p.x][p.y] = n;
+        rank_matrix[p.x][p.y] = n + 1;
         r_cluster = update_cluster_radius(r_cluster, center, &p);
 
         notify_progress(n, n_walks);
