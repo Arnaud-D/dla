@@ -1,5 +1,6 @@
 mod matrix;
 mod image;
+mod cli;
 
 struct Progress {
     n_skips: u32,
@@ -21,34 +22,11 @@ impl Progress {
     }
 }
 
-struct Cli {
-    output_filename: String,
-    img_size: usize,
-    n_walks: u32,
-    mode: u32
-}
-
-impl Cli {
-    fn parse_args() -> Cli {
-        let output_filename = std::env::args().nth(1).expect("no filename given");
-        let img_size = std::env::args().nth(2).expect("no image size given");
-        let n_walks = std::env::args().nth(3).expect("no number of walks given");
-        let mode = match std::env::args().nth(4) {
-            Some(m) => m,
-            None => "0".to_string()
-        };
-        return Cli {
-            output_filename,
-            img_size: img_size.parse::<usize>().unwrap(),
-            n_walks: n_walks.parse::<u32>().unwrap(),
-            mode: mode.parse::<u32>().unwrap()
-        };
-    }
-}
-
-
 fn main() {
-    let args = Cli::parse_args();
+    let args= match cli::Cli::parse_args() {
+        Ok(a) => a,
+        Err(e) => return println!("Error: {}", e)
+    };
 
     // Record start time
     let start_time = std::time::SystemTime::now();
@@ -67,6 +45,6 @@ fn main() {
     // Save output image
     match img.save(&args.output_filename) {
         Ok(_) => println!("File `{}` saved successfully.", args.output_filename),
-        Err(_) => println!("An error occured when saving the image. The file `{}` might be write-protected.", args.output_filename),
+        Err(_) => println!("Error: An error occured when saving the image. The file `{}` might be write-protected.", args.output_filename),
     }
 }
