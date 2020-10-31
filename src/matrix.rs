@@ -53,7 +53,7 @@ impl Box {
         } else if max > max_size - 2 {
             max = max_size - 2
         }
-        return Box {min: min as usize, max: max as usize};
+        return Box { min: min as usize, max: max as usize };
     }
 
     fn sample_point(&self, rg: &mut rand::rngs::SmallRng) -> Point {
@@ -67,7 +67,7 @@ impl Box {
     }
 }
 
-pub fn generate_matrix(size: usize, n_walks: u32) -> Matrix {
+pub fn generate_matrix(size: usize, n_walks: u32, mut notify_progress: impl FnMut(u32, u32)) -> Matrix {
     // Define constants and algorithms parameters
     let neighbour_coords = [(1, 0), (-1, 0), (0, 1), (0, -1)];
     let vicinity_ratio = 2;
@@ -106,7 +106,8 @@ pub fn generate_matrix(size: usize, n_walks: u32) -> Matrix {
         }
         matrix[p.x][p.y] = false;
         r_cluster = update_cluster_radius(r_cluster, center, &p);
-        println!("Random walk {}/{}.", n + 1, n_walks);
+
+        notify_progress(n, n_walks);
     }
     return matrix;
 }
