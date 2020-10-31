@@ -25,6 +25,7 @@ struct Cli {
     output_filename: String,
     img_size: usize,
     n_walks: u32,
+    mode: u32
 }
 
 impl Cli {
@@ -32,10 +33,15 @@ impl Cli {
         let output_filename = std::env::args().nth(1).expect("no filename given");
         let img_size = std::env::args().nth(2).expect("no image size given");
         let n_walks = std::env::args().nth(3).expect("no number of walks given");
+        let mode = match std::env::args().nth(4) {
+            Some(m) => m,
+            None => "0".to_string()
+        };
         return Cli {
             output_filename,
             img_size: img_size.parse::<usize>().unwrap(),
-            n_walks: n_walks.parse::<u32>().unwrap()
+            n_walks: n_walks.parse::<u32>().unwrap(),
+            mode: mode.parse::<u32>().unwrap()
         };
     }
 }
@@ -52,7 +58,7 @@ fn main() {
     let mut progress = Progress::new(n_skips, n_skips - (args.n_walks - 1) % n_skips);
     let display = |n: u32, n_walks: u32| -> () { progress.display(n, n_walks) };
     let matrix = matrix::generate_matrix(args.img_size, args.n_walks, display);
-    let img = image::convert_matrix(matrix);
+    let img = image::convert_matrix(matrix, args.mode, args.n_walks-1);
 
     // Display elapsed time
     let elapsed = start_time.elapsed().unwrap();

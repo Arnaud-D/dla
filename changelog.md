@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unrealeased]
 ### Added
 - Command line interface
+- Mode to add color according to particle rank
 
 ### Changed
 - Less verbose display of progress

@@ -4,13 +4,14 @@ use rand;
 use rand::{Rng, SeedableRng};
 use rand::seq::SliceRandom;
 
-pub type Matrix = Vec<Vec<bool>>;
+pub type BoolMatrix = Vec<Vec<bool>>;
+pub type RankMatrix = Vec<Vec<u32>>;
 
-trait MatrixTrait {
+trait BoolMatrixTrait {
     fn is_isolated(&self, p: &Point) -> bool;
 }
 
-impl MatrixTrait for Matrix {
+impl BoolMatrixTrait for BoolMatrix {
     fn is_isolated(&self, p: &Point) -> bool {
         return self[p.x + 1][p.y] && self[p.x - 1][p.y]
             && self[p.x][p.y + 1] && self[p.x][p.y - 1];
@@ -67,7 +68,7 @@ impl Box {
     }
 }
 
-pub fn generate_matrix(size: usize, n_walks: u32, mut notify_progress: impl FnMut(u32, u32)) -> Matrix {
+pub fn generate_matrix(size: usize, n_walks: u32, mut notify_progress: impl FnMut(u32, u32)) -> RankMatrix {
     // Define constants and algorithms parameters
     let neighbour_coords = [(1, 0), (-1, 0), (0, 1), (0, -1)];
     let vicinity_ratio = 2;
@@ -76,11 +77,12 @@ pub fn generate_matrix(size: usize, n_walks: u32, mut notify_progress: impl FnMu
     // Initialize
     let mut rg_pixels = rand::rngs::SmallRng::from_entropy();
     let mut rg_neighbours = rand::rngs::SmallRng::from_entropy();
-    let mut matrix = vec![vec![true; size]; size];
+    let mut bool_matrix = vec![vec![true; size]; size];
+    let mut rank_matrix = vec![vec![0 as u32;size]; size];
     let center = (size + 1) / 2;
     // Minimal cluster radius considered
     let mut r_cluster = 50;
-    matrix[center][center] = false;
+    bool_matrix[center][center] = false;
 
     for n in 0..n_walks {
         // Update boxes limits
@@ -91,7 +93,7 @@ pub fn generate_matrix(size: usize, n_walks: u32, mut notify_progress: impl FnMu
 
         // Perform random walk
         let mut p = vicinity_box.sample_point(&mut rg_pixels);
-        while matrix.is_isolated(&p) {
+        while bool_matrix.is_isolated(&p) {
             // Move the particle
             let displacement = neighbour_coords.choose(&mut rg_neighbours).unwrap();
             p = Point {
@@ -104,10 +106,11 @@ pub fn generate_matrix(size: usize, n_walks: u32, mut notify_progress: impl FnMu
                 p = vicinity_box.sample_point(&mut rg_pixels);
             }
         }
-        matrix[p.x][p.y] = false;
+        bool_matrix[p.x][p.y] = false;
+        rank_matrix[p.x][p.y] = n;
         r_cluster = update_cluster_radius(r_cluster, center, &p);
 
         notify_progress(n, n_walks);
     }
-    return matrix;
+    return rank_matrix;
 }
