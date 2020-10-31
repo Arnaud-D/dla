@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unrealeased]
 ### Added
+- Readme with short description and manual
 - Command line interface
 - Mode to add color according to particle rank
 
